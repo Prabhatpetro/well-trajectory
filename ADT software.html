@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>Geometrical Well Planning Profile</title>
+<style>
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.left-panel {
+  width: 30%;
+  padding: 20px;
+  background: #020617;
+  border-right: 1px solid #111827;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.right-panel {
+  width: 70%;
+  padding: 20px;
+  display: grid;
+  grid-template-rows: 2fr 1.4fr;
+  gap: 16px;
+}
+
+h1 {
+  font-size: 1.25rem;
+  margin: 0;
+  color: #f9fafb;
+}
+
+h2 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+  color: #e5e7eb;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.card {
+  background: #020617;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #1f2937;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  margin-top: 10px;
+}
+
+label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  display: block;
+  margin-bottom: 4px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #f9fafb;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 1px #0ea5e9;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.row>* {
+  flex: 1;
+}
+
+button {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #0ea5e9, #22c55e);
+  color: #0b1120;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+.helper-text {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+#errorMessage {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #fca5a5;
+}
+
+#graphCard {
+  display: flex;
+  flex-direction: column;
+}
+
+#graphHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+#graphInfo {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent),
+    radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.1), transparent);
+}
+
+#tableCard {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+th,
+td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #1f2937;
+  text-align: center;
+  white-space: nowrap;
+}
+
+th {
+  background: #020617;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+tr:nth-child(even) td {
+  background: #020617;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  border: 1px solid #22c55e;
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.1);
+  margin-left: 6px;
+}
+
+.case-indicator {
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid #0ea5e9;
+  color: #38bdf8;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: auto;
+  margin-right: 12px;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 100%;
+  }
+
+  .right-panel {
+    grid-template-rows: 280px auto;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app-container">
+  <!-- LEFT PANEL: INPUTS -->
+  <div class="left-panel">
+    <div>
+      <h1>Geometrical Well Planning</h1>
+      <div class="subtitle">Type 1 / Type 2 / Type 3 Profiles</div>
+    </div>
+
+    <div class="card">
+      <h2>Profile Setting</h2>
+      <div class="row" style="margin-top:8px;">
+        <div>
+          <label for="profileType">Profile Type</label>
+          <select id="profileType">
+            <option value="type1">Type 1 (Build only)</option>
+            <option value="type2">Type 2 (Build + Drop)</option>
+            <option value="type3" selected>Type 3 (Build and Hold)</option>
+          </select>
+        </div>
+        <div>
+          <label for="alpha2Deg">Final inclination α₂(deg)</label>
+          <input id="alpha2Deg" type="number" step="0.0001" placeholder="">
+        </div>
+      </div>
+
+      <div class="helper-text" id="typeHint">
+        Type 3: Uses Vt, Ht, Vb and computes α₂ and BUR from geometry (case 1: known Vt, Ht, Vb).
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Coordinates</h2>
+      <div class="input-grid">
+        <div>
+          <label for="Es">Surface Co-ordinate (Es)</label>
+          <input id="Es" type="number" step="0.0001" placeholder="ft">
+        </div>
+        <div>
+          <label for="Ns">Surface Co-ordinate (Ns)</label>
+          <input id="Ns" type="number" step="0.0001" placeholder="ft">
+        </div>
+        <div>
+          <label for="Et">Target Co-ordinate (Et)</label>
+          <input id="Et" type="number" step="0.0001" placeholder="ft">
+        </div>
+        <div>
+          <label for="Nt">Target Co-ordinate (Nt)</label>
+          <input id="Nt" type="number" step="0.0001" placeholder="ft">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Depth(ft) & Rate(deg/ft)</h2>
+      <div class="input-grid">
+        <div>
+          <label for="Vt">TVD of Target (Vt)</label>
+          <input id="Vt" type="number" step="0.0001" placeholder="ft">
+        </div>
+        <div>
+          <label for="Vb">TVD of KOP (Vb)</label>
+          <input id="Vb" type="number" step="0.0001" placeholder="ft">
+        </div>
+        <div>
+          <label for="BUR">Build-up rate (BUR)</label>
+          <input id="BUR" type="number" step="0.0001" placeholder="deg/100 ft">
+        </div>
+        <div>
+          <label for="DOR">Drop-off rate (DOR) (Type 2)</label>
+          <input id="DOR" type="number" step="0.0001" placeholder="deg/100 ft">
+        </div>
+        <div>
+          <label for="Ve">TVD at End of drop (Ve) (Type 2)</label>
+          <input id="Ve" type="number" step="0.0001" placeholder="ft">
+        </div>
+        <div>
+          <label for="Ht">Target horizontal displacement (Ht)</label>
+          <input id="Ht" type="number" step="0.0001" placeholder="ft">
+        </div>
+      </div>
+
+      <button id="computeBtn">Compute profile</button>
+      <button id="clearBtn">Clear Inputs</button>
+      <div id="errorMessage"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: GRAPH + TABLE -->
+  <div class="right-panel">
+    <!-- GRAPH -->
+    <div class="card" id="graphCard">
+      <div id="graphHeader">
+        <div>
+          <h2>Well Path Profile</h2>
+          <div class="subtitle">x-axis: HD (ft), y-axis: TVD (ft)</div>
+        </div>
+        <div id="graphInfo"></div>
+      </div>
+      <canvas id="profileCanvas"></canvas>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card" id="tableCard">
+      <h2>Computed Points <span class="badge">S / B / … / T</span></h2>
+      <div class="subtitle" style="margin-bottom:8px;">
+        Depth(ft)
+      </div>
+      <div style="max-height: 220px; overflow:auto;">
+        <table id="resultTable">
+          <thead>
+            <tr>
+              <th>Point</th>
+              <th>Vertical depth (VD) (ft)</th>
+              <th>Horizontal displacement (HD) (ft)</th>
+              <th>Measured depth (MD) (ft)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- rows injected via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Helper functions for angle conversion
+const deg2rad = (deg) => deg * Math.PI / 180;
+const rad2deg = (rad) => rad * 180 / Math.PI;
+
+// DOM Elements
+const profileTypeSelect = document.getElementById("profileType");
+const typeHint = document.getElementById("typeHint");
+const errorMessage = document.getElementById("errorMessage");
+const graphInfo = document.getElementById("graphInfo");
+const canvas = document.getElementById("profileCanvas");
+const ctx = canvas.getContext("2d");
+const tableBody = document.querySelector("#resultTable tbody");
+
+// Read numeric input safely
+function getNumber(id) {
+  const v = document.getElementById(id).value;
+  if (v === "") return null;
+  return Number(v);
+}
+
+// Show hint based on profile type selected
+function setHint() {
+  const type = profileTypeSelect.value;
+  if (type === "type1") {
+    typeHint.textContent =
+      "Type 1: Build-up ";
+  } else if (type === "type2") {
+    typeHint.textContent =
+      "Type 2: Build + Drop";
+  } else {
+    typeHint.textContent =
+      "Type 3: Build & hold";
+  }
+}
+profileTypeSelect.addEventListener("change", setHint);
+setHint();
+
+// Clear all inputs and outputs
+function clearAllInputs() {
+  const inputs = document.querySelectorAll(".left-panel input, .left-panel select");
+  inputs.forEach(input => input.value = "");
+  errorMessage.textContent = "";
+  graphInfo.textContent = "";
+  tableBody.innerHTML = "";
+  const existingInd = document.querySelector(".case-indicator");
+  if (existingInd) existingInd.remove();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+document.getElementById("clearBtn").addEventListener("click", clearAllInputs);
+
+// Compute profile button event handler
+document.getElementById("computeBtn").addEventListener("click", () => {
+  errorMessage.textContent = "";
+  graphInfo.textContent = "";
+  tableBody.innerHTML = "";
+  resizeCanvas();
+
+  const existingInd = document.querySelector(".case-indicator");
+  if (existingInd) existingInd.remove();
+
+  const type = profileTypeSelect.value;
+
+  try {
+    let result;
+    if (type === "type1") result = computeType1();
+    else if (type === "type2") result = computeType2();
+    else result = computeType3();
+
+    if (!result || !result.points || result.points.length === 0) {
+      throw new Error("No points were generated. Check your inputs.");
+    }
+
+    renderTable(result.points);
+    drawGraph(result.points);
+    graphInfo.textContent = result.infoText || "";
+  } catch (e) {
+    errorMessage.textContent = e.message;
+    console.error(e);
+  }
+});
+
+// TYPE 1 PROFILE: Build only (S, B, C, T)
+function computeType1() {
+  const Es = getNumber("Es");
+  const Ns = getNumber("Ns");
+  const Et = getNumber("Et");
+  const Nt = getNumber("Nt");
+  const Vt = getNumber("Vt");
+  const Vb = getNumber("Vb");
+  const BUR = getNumber("BUR");
+  const HtInput = getNumber("Ht");
+
+  if ([Vt, Vb, BUR].some(v => v === null))
+    throw new Error("Type 1: Please fill Vt, Vb and BUR.");
+
+  if (BUR <= 0)
+    throw new Error("BUR must be positive.");
+
+  let Ht;
+  if (HtInput !== null) {
+    Ht = HtInput;
+  } else {
+    if ([Es, Ns, Et, Nt].some(v => v === null))
+      throw new Error("Type 1: Please provide Target Displacement Ht OR all Coordinates (Es, Ns, Et, Nt).");
+    Ht = Math.sqrt(Math.pow(Nt - Ns, 2) + Math.pow(Et - Es, 2));
+  }
+
+  const R = (180 * 100) / (Math.PI * BUR);
+
+  const xRad = Math.atan((Ht - R) / (Vt - Vb));
+  const alphaRad =
+    xRad + Math.asin((R * Math.cos(xRad)) / (Vt - Vb));
+  const alphaDeg = rad2deg(alphaRad);
+
+  const caseType = xRad < 0 ? "Case 2 (R > Ht)" : "Case 1 (R < Ht)";
+
+  const caseIndicator = document.createElement("div");
+  caseIndicator.className = "case-indicator";
+  caseIndicator.textContent = caseType;
+  document.getElementById("graphHeader").appendChild(caseIndicator);
+
+  const S = { name: "S", V: 0, H: 0, MD: 0 };
+  const B = {
+    name: "B",
+    V: Vb,
+    H: 0,
+    MD: Vb,
+    arc: { R: R, startDeg: 0, endDeg: alphaDeg, type: "build" }
+  };
+
+  const Vc = Vb + R * Math.sin(alphaRad);
+  const Hc = R * (1 - Math.cos(alphaRad));
+  const MDc = B.MD + (alphaDeg * 100) / BUR;
+  const C = { name: "C", V: Vc, H: Hc, MD: MDc };
+
+  const MDt = MDc + (Vt - Vc) / Math.cos(alphaRad);
+  const T = { name: "T", V: Vt, H: Ht, MD: MDt };
+
+  return {
+    points: [S, B, C, T],
+    infoText: `Type 1 | Ht ≈ ${Ht.toFixed(2)} ft, R ≈ ${R.toFixed(2)} ft, α ≈ ${alphaDeg.toFixed(2)}°`
+  };
+}
+
+// TYPE 2 PROFILE: Build + Drop (S, B, C, D, E, T)
+function computeType2() {
+  const Es = getNumber("Es");
+  const Ns = getNumber("Ns");
+  const Et = getNumber("Et");
+  const Nt = getNumber("Nt");
+  const Vt = getNumber("Vt");
+  const Vb = getNumber("Vb");
+  const BUR = getNumber("BUR");
+  const DOR = getNumber("DOR");
+  const Ve = getNumber("Ve");
+  const alpha2Deg = getNumber("alpha2Deg");
+  const HtInput = getNumber("Ht");
+
+  if ([Vt, Vb, BUR, DOR, Ve, alpha2Deg].some(v => v === null))
+    throw new Error("Type 2: Please fill Vt, Vb, BUR, DOR, Ve and α₂.");
+
+  if (BUR <= 0 || DOR <= 0)
+    throw new Error("BUR and DOR must be positive.");
+
+  let Ht;
+  if (HtInput !== null) {
+    Ht = HtInput;
+  } else {
+    if ([Es, Ns, Et, Nt].some(v => v === null))
+      throw new Error("Type 2: Please provide Target Displacement Ht OR all Coordinates (Es, Ns, Et, Nt).");
+    Ht = Math.sqrt(Math.pow(Nt - Ns, 2) + Math.pow(Et - Es, 2));
+  }
+
+  const R1 = (180 * 100) / (Math.PI * BUR);
+  const R2 = (180 * 100) / (Math.PI * DOR);
+  const alpha2Rad = deg2rad(alpha2Deg);
+
+  const OQ = Ht - R1 - (R2 * Math.cos(alpha2Rad)) -
+    (Vt - Ve) * Math.tan(alpha2Rad);
+
+  const OP = Ve - Vb + R2 * Math.sin(alpha2Rad);
+
+  const xRad = Math.atan2(OQ, OP);
+
+  const QF = R1 + R2;
+  const PQ = Math.sqrt(OP * OP + OQ * OQ);
+  const PF = Math.sqrt(Math.max(PQ * PQ - QF * QF, 0));
+
+  const yRad = Math.atan2(QF, PF);
+
+  const alpha1Rad = xRad + yRad;
+  const alpha1Deg = rad2deg(alpha1Rad);
+  const CD = PF;
+
+  const S = { name: "S", V: 0, H: 0, MD: 0 };
+  const B = {
+    name: "B",
+    V: Vb,
+    H: 0,
+    MD: Vb,
+    arc: { R: R1, startDeg: 0, endDeg: alpha1Deg, type: "build" }
+  };
+
+  const Vc = Vb + R1 * Math.sin(alpha1Rad);
+  const Hc = R1 * (1 - Math.cos(alpha1Rad));
+  const MDc = B.MD + (alpha1Deg * 100) / BUR;
+  const C = { name: "C", V: Vc, H: Hc, MD: MDc };
+
+  const Vd = Vc + CD * Math.cos(alpha1Rad);
+  const Hd = Hc + CD * Math.sin(alpha1Rad);
+  const MDd = MDc + CD;
+  const D = {
+    name: "D",
+    V: Vd,
+    H: Hd,
+    MD: MDd,
+    arc: { R: R2, startDeg: alpha1Deg, endDeg: alpha2Deg, type: "drop" }
+  };
+
+  const VeFinal = Ve;
+  const He = Hd + R2 * (Math.cos(alpha2Rad) - Math.cos(alpha1Rad));
+  const MDe = MDd + (100 * (alpha2Deg - alpha1Deg)) / DOR;
+  const Ept = { name: "E", V: VeFinal, H: He, MD: MDe };
+
+  const MDt = MDe + (Vt - VeFinal) / Math.cos(alpha2Rad);
+  const T = { name: "T", V: Vt, H: Ht, MD: MDt };
+
+  return {
+    points: [S, B, C, D, Ept, T],
+    infoText: `Type 2 | Ht ≈ ${Ht.toFixed(2)} ft, R₁ ≈ ${R1.toFixed(2)} ft, R₂ ≈ ${R2.toFixed(2)} ft, α₁ ≈ ${alpha1Deg.toFixed(2)}°, α₂ = ${alpha2Deg.toFixed(2)}°`
+  };
+}
+
+// TYPE 3 PROFILE: Build and hold (S, B, T)
+function computeType3() {
+  const Vt = getNumber("Vt");
+  const Vb = getNumber("Vb");
+  const BUR = getNumber("BUR");
+  const alpha2Deg = getNumber("alpha2Deg");
+  const HtInput = getNumber("Ht");
+
+  const Es = getNumber("Es");
+  const Ns = getNumber("Ns");
+  const Et = getNumber("Et");
+  const Nt = getNumber("Nt");
+
+  let Ht = HtInput;
+  if (Ht === null && Es !== null && Ns !== null && Et !== null && Nt !== null) {
+    Ht = Math.sqrt(Math.pow(Nt - Ns, 2) + Math.pow(Et - Es, 2));
+  }
+
+  if (Vt === null) throw new Error("Type 3: Target TVD (Vt) is required for all cases.");
+
+  let caseName = "";
+  let R, calcAlpha2Deg, calcVb, calcHt, calcBUR;
+
+  if (Ht !== null && Vb !== null && BUR === null && alpha2Deg === null) {
+    caseName = "Case 1 (Vt, Ht, Vb)";
+    if (Vt <= Vb) throw new Error("Type 3 Case 1: Vt must be > Vb.");
+
+    const deltaV = Vt - Vb;
+    const alpha2Rad = 2 * Math.atan(Ht / deltaV);
+    calcAlpha2Deg = rad2deg(alpha2Rad);
+
+    R = deltaV / Math.sin(alpha2Rad);
+    calcBUR = (180 * 100) / (Math.PI * R);
+
+    calcVb = Vb;
+    calcHt = Ht;
+  } else if (Ht !== null && BUR !== null && Vb === null && alpha2Deg === null) {
+    caseName = "Case 2 (Vt, Ht, BUR)";
+    if (BUR <= 0) throw new Error("BUR must be positive.");
+
+    R = (180 * 100) / (Math.PI * BUR);
+
+    const cosAlpha2 = (R - Ht) / R;
+    if (cosAlpha2 < -1 || cosAlpha2 > 1) throw new Error("Type 3 Case 2: Invalid geometry (R < Ht/2 implies unreachable). Check inputs.");
+
+    const alpha2Rad = Math.acos(cosAlpha2);
+    calcAlpha2Deg = rad2deg(alpha2Rad);
+
+    calcVb = Vt - R * Math.sin(alpha2Rad);
+    calcHt = Ht;
+    calcBUR = BUR;
+  } else if (Ht !== null && alpha2Deg !== null && Vb === null && BUR === null) {
+    caseName = "Case 3 (Vt, Ht, α₂)";
+    const alpha2Rad = deg2rad(alpha2Deg);
+    if (alpha2Rad <= 0) throw new Error("α₂ must be positive.");
+
+    R = Ht / (1 - Math.cos(alpha2Rad));
+
+    calcVb = Vt - R * Math.sin(alpha2Rad);
+    calcBUR = (180 * 100) / (Math.PI * R);
+    calcHt = Ht;
+    calcAlpha2Deg = alpha2Deg;
+  } else if (Vb !== null && alpha2Deg !== null && Ht === null && BUR === null) {
+    caseName = "Case 4 (Vt, Vb, α₂)";
+    if (Vt <= Vb) throw new Error("Type 3 Case 4: Vt must be > Vb.");
+
+    const alpha2Rad = deg2rad(alpha2Deg);
+    if (alpha2Rad <= 0) throw new Error("α₂ must be positive.");
+
+    R = (Vt - Vb) / Math.sin(alpha2Rad);
+
+    calcHt = R * (1 - Math.cos(alpha2Rad));
+    calcBUR = (180 * 100) / (Math.PI * R);
+    calcVb = Vb;
+    calcAlpha2Deg = alpha2Deg;
+  } else {
+    throw new Error("Type 3: Please provide exactly one of these combinations:\n" +
+      "1) Vt, Ht, Vb\n" +
+      "2) Vt, Ht, BUR\n" +
+      "3) Vt, Ht, α₂\n" +
+      "4) Vt, Vb, α₂");
+  }
+
+  const alpha2Rad = deg2rad(calcAlpha2Deg);
+
+  const S = { name: "S", V: 0, H: 0, MD: 0 };
+  const B = {
+    name: "B",
+    V: calcVb,
+    H: 0,
+    MD: calcVb,
+    arc: { R: R, startDeg: 0, endDeg: calcAlpha2Deg, type: "build" }
+  };
+
+  const VtCalc = calcVb + R * Math.sin(alpha2Rad);
+  const HtCalc = R * (1 - Math.cos(alpha2Rad));
+
+  const MDt = B.MD + (calcAlpha2Deg * 100) / calcBUR;
+
+  const T = { name: "T", V: VtCalc, H: HtCalc, MD: MDt };
+
+  return {
+    points: [S, B, T],
+    infoText: `Type 3 | ${caseName}. Computed: R ≈ ${R.toFixed(2)} ft, α₂ ≈ ${calcAlpha2Deg.toFixed(2)}°, BUR ≈ ${calcBUR.toFixed(3)} deg/100 ft.`
+  };
+}
+
+// Render table rows for points
+function renderTable(points) {
+  tableBody.innerHTML = "";
+  points.forEach(p => {
+    const tr = document.createElement("tr");
+    const cols = [p.name, p.V.toFixed(3), p.H.toFixed(3), p.MD.toFixed(3)];
+    cols.forEach(value => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+    tableBody.appendChild(tr);
+  });
+}
+
+// Resize canvas with device pixel ratio
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Draw the graph with equal scaling on x and y axes
+function drawGraph(points) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const rect = canvas.getBoundingClientRect();
+  const width = rect.width;
+  const height = rect.height;
+  const margin = 40;
+
+  let minH = Infinity, maxH = -Infinity;
+  let minV = Infinity, maxV = -Infinity;
+
+  points.forEach(p => {
+    if (p.H < minH) minH = p.H;
+    if (p.H > maxH) maxH = p.H;
+    if (p.V < minV) minV = p.V;
+    if (p.V > maxV) maxV = p.V;
+  });
+
+  if (minH === maxH) {
+    minH -= 1;
+    maxH += 1;
+  }
+  if (minV === maxV) {
+    minV -= 1;
+    maxV += 1;
+  }
+
+  const dataWidth = maxH - minH;
+  const dataHeight = maxV - minV;
+  const plotWidth = width - 2 * margin;
+  const plotHeight = height - 2 * margin;
+
+  const dataScale = Math.min(plotWidth / dataWidth, plotHeight / dataHeight);
+
+  function toCanvas(p) {
+    const x = margin + (p.H - minH) * dataScale;
+    const y = margin + (p.V - minV) * dataScale;
+    return { x, y };
+  }
+
+  // Axes
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "#6b7280";
+  ctx.beginPath();
+  ctx.moveTo(margin, margin);
+  ctx.lineTo(margin, height - margin);
+  ctx.moveTo(margin, height - margin);
+  ctx.lineTo(width - margin, height - margin);
+  ctx.stroke();
+
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "10px system-ui";
+  ctx.fillText("V (TVD, ft)", margin + 4, margin + 10);
+  ctx.fillText("H (HD, ft)", width - margin - 35, height - margin + 12);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  for (let i = 0; i <= 4; i++) {
+    const frac = i / 4;
+    const Hval = minH + frac * (maxH - minH);
+    const x = margin + (Hval - minH) * dataScale;
+    ctx.beginPath();
+    ctx.moveTo(x, height - margin);
+    ctx.lineTo(x, height - margin + 4);
+    ctx.strokeStyle = "#374151";
+    ctx.stroke();
+    ctx.fillText(Hval.toFixed(1), x, height - margin + 14);
+  }
+
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  for (let i = 0; i <= 4; i++) {
+    const frac = i / 4;
+    const Vval = minV + frac * (maxV - minV);
+    const y = margin + (Vval - minV) * dataScale;
+    ctx.beginPath();
+    ctx.moveTo(margin, y);
+    ctx.lineTo(margin - 4, y);
+    ctx.strokeStyle = "#374151";
+    ctx.stroke();
+    ctx.fillText(Vval.toFixed(1), margin - 6, y);
+  }
+
+  // Draw well path
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#22c55e";
+  ctx.beginPath();
+
+  points.forEach((p, idx) => {
+    if (idx === 0) {
+      const { x, y } = toCanvas(p);
+      ctx.moveTo(x, y);
+      return;
+    }
+
+    const prev = points[idx - 1];
+    if (prev.arc) {
+      const { R, startDeg, endDeg, type } = prev.arc;
+      const steps = 20;
+
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        const currentDeg = startDeg + t * (endDeg - startDeg);
+        const currentRad = deg2rad(currentDeg);
+        const startRad = deg2rad(startDeg);
+
+        let H_interp, V_interp;
+
+        if (type === "build") {
+          H_interp = prev.H + R * (Math.cos(startRad) - Math.cos(currentRad));
+          V_interp = prev.V + R * (Math.sin(currentRad) - Math.sin(startRad));
+        } else {
+          H_interp = prev.H + R * (Math.cos(currentRad) - Math.cos(startRad));
+          V_interp = prev.V + R * (Math.sin(startRad) - Math.sin(currentRad));
+        }
+
+        const pt = toCanvas({ H: H_interp, V: V_interp });
+        ctx.lineTo(pt.x, pt.y);
+      }
+      const { x, y } = toCanvas(p);
+      ctx.lineTo(x, y);
+    } else {
+      const { x, y } = toCanvas(p);
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  // Draw points
+  points.forEach(p => {
+    const { x, y } = toCanvas(p);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "#0ea5e9";
+    ctx.fill();
+
+    ctx.fillStyle = "#e5e7eb";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "bottom";
+    ctx.font = "11px system-ui";
+    ctx.fillText(p.name, x + 6, y - 3);
+  });
+}
+
+</script>
+</body>
+
+</html>
