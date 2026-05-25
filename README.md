@@ -1,2 +1,2 @@
 # well-trajectory
-Telling the type of well wuth the help of coordinates
+Telling the type of well with the help of coordinates
